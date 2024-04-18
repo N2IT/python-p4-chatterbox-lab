@@ -58,6 +58,8 @@ class TestApp:
             h = Message.query.filter_by(body="Hello 👋").first()
             assert(h)
 
+            
+
             db.session.delete(h)
             db.session.commit()
 
