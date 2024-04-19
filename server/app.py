@@ -16,7 +16,7 @@ db.init_app(app)
 
 @app.route('/')
 def home():
-    return '<h1>CHATTERBOX API LAB</h1>'
+    return f'<h1>MESSAGES API APP</h1>'
 
 @app.route('/messages', methods = ['GET', 'POST'])
 def messages():
@@ -25,28 +25,22 @@ def messages():
     messages = [message.to_dict() for message in Message.query.order_by(Message.created_at.asc()).all()]
 
     if request.method == 'GET':
-    
-        response = make_response(
-            messages,
-            200
-        )
-
-        return response
+        return make_response(messages, 200)
+        # response = make_response(
+        #     messages,
+        #     200
+        # )
+        # return response
 
     elif request.method == 'POST':
-
         data = request.get_json()
-        
         new_message = Message(
             body = data.get("body"),
             username = data.get("username"),
         )
-
         db.session.add(new_message)
         db.session.commit()
-
         new_message_dict = new_message.to_dict()
-
         response = make_response(
             new_message_dict,
             201
@@ -57,53 +51,52 @@ def messages():
 
 @app.route('/messages/<int:id>', methods = ['GET', 'PATCH', 'DELETE'])
 def messages_by_id(id):
-    data = request.get_json()
+
     message = Message.query.filter_by(id=id).first()
+    # data = request.get_json() 
+    # why does this break shit???
 
     if request.method == 'GET':
-        message_to_dict = message.to_dict()
+        if message:
+            response = message.to_dict()
+            status_code = 200
+        else:
+            response = {"message" : "Message does not exist."}
+            status_code = 404
 
-        response = make_response(
-            message_to_dict,
-            200
-        )
-
-        return response
+        return make_response(response, status_code)
+        
+    # if request.method == 'GET':
+    #     message_serialized = message.to_dict()
+    #     response = make_response ( message_serialized, 200  )
+    #     return response
     
     elif request.method == 'PATCH':
-
+        data = request.get_json() 
         for attr in data:
             setattr(message, attr, data[attr])
-        
         db.session.add(message)
         db.session.commit()
-
         message_to_dict = message.to_dict()
-
         response = make_response(
             message_to_dict,
             200
         )
-
         return response
 
     elif request.method == 'DELETE':
-        breakpoint()
         db.session.delete(message)
         db.session.commit()
-
         response_body = {
             "delete_successful": True,
             "message": "Review deleted."
         }
-
         response = make_response(
             response_body,
             200
         )
 
         return response
-
 
 
 if __name__ == '__main__':
